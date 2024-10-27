@@ -4,6 +4,15 @@ const app = express();
 
 app.use(express.json());
 
+const loggingMiddleware = (req, res, next) => {
+    console.log(`${req.method} - ${req.url}`);
+    next();
+}
+
+app.use(loggingMiddleware);
+
+
+
 const PORT = process.env.PORT || 3000;
 const testing = [
     {id:1, username:"alice", fullname:"Alice Wonderland"},
@@ -58,7 +67,43 @@ app.post('/api/test',(req,res)=>{
     const newData = {id:testing.length+1, ...req.body};
     // const newData = req.body;
     testing.push(newData);
-    return res.send(testing);
+    return res.send(newData);
+})
+
+app.put('/api/test/:id',(req,res)=>{
+    const { body, params: { id } } = req;
+    const parseId = parseInt(id);
+    if (isNaN(parseId)) {
+        return res.sendStatus(400);
+    }  
+    const findUserIndex = testing.findIndex((data) => data.id === parseId);
+    if (findUserIndex === -1) {
+        return res.sendStatus(404);
+    }
+    testing[findUserIndex] = {id : parseId, ...body};
+    res.send(testing);
+}
+)
+
+app.patch('/api/test/:id',(req,res)=>{
+    const  { body, params: { id }} = req;
+    const parseId = parseInt(id);
+    if (isNaN(parseId)) return res.sendStatus(400);
+    const findUserIndex = testing.findIndex((data)=>data.id === parseId);
+    if (findUserIndex === -1) return res.sendStatus(404);
+    testing[findUserIndex] = {...testing[findUserIndex], ...body};
+    res.status(200).send(testing);  
+})
+
+
+app.delete('/api/test/:id',(req,res)=>{
+    const { params: { id }} = req;
+    const parseId = parseInt(id);
+    if (isNaN(parseId)) return res.sendStatus(400);
+    const findUserIndex = testing.findIndex((data)=>data.id === parseId);
+    if (findUserIndex === -1) return res.sendStatus(404);
+    testing.splice(findUserIndex,1);
+    res.status(200).send(testing); 
 })
 app.listen(PORT, () => {
     console.log(`listening on port ${PORT}`);
