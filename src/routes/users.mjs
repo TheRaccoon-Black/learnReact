@@ -19,7 +19,16 @@ router.get(
     .isLength({ min: 3, max: 10 })
     .withMessage("filter min 3 max 10"),
   (req, res) => {
-    console.log(req.query);
+    console.log(req.session);
+    console.log(req.session.id);
+req.sessionStore.get(req.session.id, (err, sessionData) => {
+  if (err) {
+    console.log(err);
+    throw  err;
+  }
+  console.log(sessionData);
+})
+    // console.log(req.query);
     const result = validationResult(req);
     console.log(result);
     const {
@@ -37,7 +46,6 @@ router.get(
 );
 
 router.get("/api/test/:id", resolveIndexByUserId, (req, res) => {
-
   const { findUserIndex } = req;
   const findUser = testing[findUserIndex];
   if (!findUser) {
@@ -45,7 +53,6 @@ router.get("/api/test/:id", resolveIndexByUserId, (req, res) => {
   }
   return res.status(200).send(findUser);
 });
-
 
 router.put("/api/test/:id", resolveIndexByUserId, (req, res) => {
   const { body, findUserIndex } = req;

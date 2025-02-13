@@ -1,12 +1,21 @@
 import express, { response } from "express";
 import indexRouter from "./routes/index.mjs";
 import cookieParser from "cookie-parser";
+import session from "express-session";
 // import usersRouter from "./routes/users.mjs";
 // import productsRouter from "./routes/products.mjs";
 
 const app = express();
 
 app.use(express.json());
+app.use(session({
+  secret:"this is the secret",
+  saveUninitialized:false,
+  resave:false,
+  cookie:{
+    maxAge:60000 * 60,
+  }
+}));
 app.use(cookieParser("helloWorld"));
 app.use(indexRouter)
 // app.use(usersRouter);
@@ -21,6 +30,9 @@ const PORT = process.env.PORT || 3000;
 
 
 app.get("/", (req, res) => {
+  console.log(req.session);
+  console.log(req.session.id);
+  req.session.visited = true;
   res.cookie("testingCookieName","thisTheValueOfCookie",{maxAge:10000,signed:true });
   res.status(200).send({ message: "ini testing" });
 });
