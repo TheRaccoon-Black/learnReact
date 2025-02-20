@@ -2,6 +2,7 @@ import express, { response } from "express";
 import indexRouter from "./routes/index.mjs";
 import cookieParser from "cookie-parser";
 import session from "express-session";
+import {testing} from "./utils/constants.mjs";
 // import usersRouter from "./routes/users.mjs";
 // import productsRouter from "./routes/products.mjs";
 
@@ -37,6 +38,41 @@ app.get("/", (req, res) => {
   res.status(200).send({ message: "ini testing" });
 });
 
+app.post("/api/auth",(req,res)=>{
+  
+  const {body : {username,password}} = req;
+  const findUser = testing.find(
+    user => user.username === username
+  );
+  if (!findUser || findUser.password !== password) return res.sendStatus(401).send({msg: "CREDENTIALS NOT FOUND"}); 
+  req.session.user = findUser;
+  return res.status(200).send(findUser);
+})
+
+app.get("/api/auth/status",(req,res)=>{
+  req.sessionStore.get(req.session.id, (err, sessionData) => {
+    console.log(sessionData);
+  });
+  return req.session.user ? res.status(200).send(req.session.user): res.status(401).send({msg:"NOT LOGGED IN"});
+});
+
+app.post("/api/cart",(req,res)=>{
+  if(!req.session.user) return res.sendStatus(401);
+  const {body: item} = req;
+
+  const {cart} = req.session;
+  if (cart){
+    cart.push(item);
+  }else{
+    req.session.cart = [item];
+  }
+  return res.status(201).send(item)
+});
+
+app.get("/api/cart", (req, res) => {
+  if(!req.session.user) return res.sendStatus(401);
+  return res.send(req.session.cart ?? [])
+});
 
 app.listen(PORT, () => {
   console.log(`listening on port ${PORT}`);
