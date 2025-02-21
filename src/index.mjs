@@ -2,7 +2,9 @@ import express, { response } from "express";
 import indexRouter from "./routes/index.mjs";
 import cookieParser from "cookie-parser";
 import session from "express-session";
+import passport from "passport";
 import {testing} from "./utils/constants.mjs";
+import "./strategies/local-strategy.mjs";
 // import usersRouter from "./routes/users.mjs";
 // import productsRouter from "./routes/products.mjs";
 
@@ -18,6 +20,8 @@ app.use(session({
   }
 }));
 app.use(cookieParser("helloWorld"));
+app.use(passport.initialize());
+app.use(passport.session());
 app.use(indexRouter)
 // app.use(usersRouter);
 // app.use(productsRouter);
@@ -38,23 +42,46 @@ app.get("/", (req, res) => {
   res.status(200).send({ message: "ini testing" });
 });
 
-app.post("/api/auth",(req,res)=>{
-  
-  const {body : {username,password}} = req;
-  const findUser = testing.find(
-    user => user.username === username
-  );
-  if (!findUser || findUser.password !== password) return res.sendStatus(401).send({msg: "CREDENTIALS NOT FOUND"}); 
-  req.session.user = findUser;
-  return res.status(200).send(findUser);
-})
+app.post("/api/auth", passport.authenticate("local"), (req, res) => {
+  return res.sendStatus(200);
+});
 
 app.get("/api/auth/status",(req,res)=>{
-  req.sessionStore.get(req.session.id, (err, sessionData) => {
-    console.log(sessionData);
-  });
-  return req.session.user ? res.status(200).send(req.session.user): res.status(401).send({msg:"NOT LOGGED IN"});
-});
+  console.log("inside status auth endpoint");
+  console.log(req.user);
+  console.log(req.session)
+  return req.user ? res.send(req.user): res.sendStatus(401);
+})
+
+app.post("/api/auth/logout",(req,res)=>{
+  if(!req.user){
+    return res.sendStatus(401);
+  }
+  req.logout((err)=>{
+    if(err){
+      return res.sendStatus(400);
+    }
+    res.sendStatus(200);
+  })
+})
+// app.post("/api/auth",(req,res)=>{
+  
+//   const {body : {username,password}} = req;
+//   const findUser = testing.find(
+//     user => user.username === username
+//   );
+//   if (!findUser || findUser.password !== password) return res.sendStatus(401).send({msg: "CREDENTIALS NOT FOUND"}); 
+//   req.session.user = findUser;
+//   return res.status(200).send(findUser);
+// })
+
+
+// app.get("/api/auth/status",(req,res)=>{
+//   req.sessionStore.get(req.session.id, (err, sessionData) => {
+//     console.log(sessionData);
+//   });
+//   return req.session.user ? res.status(200).send(req.session.user): res.status(401).send({msg:"NOT LOGGED IN"});
+// });
 
 app.post("/api/cart",(req,res)=>{
   if(!req.session.user) return res.sendStatus(401);
