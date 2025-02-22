@@ -8,6 +8,7 @@ import {
 import { userValidationSchema } from "../utils/validationSchema.js";
 import { testing } from "../utils/constants.mjs";
 import { resolveIndexByUserId } from "../utils/middlewares.mjs";
+import { User } from "../mongoose/schemas/user.mjs";
 
 const router = Router();
 
@@ -60,19 +61,38 @@ router.put("/api/test/:id", resolveIndexByUserId, (req, res) => {
   return res.send(testing);
 });
 
-router.post("/api/test", checkSchema(userValidationSchema), (req, res) => {
-  const result = validationResult(req);
-  console.log(result);
-  if (!result.isEmpty()) {
-    return res.status(400).send({ errors: result.array() });
-  }
-  const data = matchedData(req);
+router.post("/api/test", checkSchema(userValidationSchema), async(req, res) => {
+    const result = validationResult(req);
+    if(!result.isEmpty()){
+      return res.status(400).send({errors:result.array()});
+    }
 
-  const newData = { id: testing.length + 1, ...data };
+    const data = matchedData(req);
 
-  testing.push(newData);
-  return res.send(newData);
+    // const { body } = req;
+    console.log(data);
+    const newUser = new User(data);
+    try{
+      const savedUser = await newUser.save();
+      return res.status(200).send(savedUser);
+    }catch(err){
+      console.log(`ini errror ${err}`);
+      return res.status(400);
+    }
 });
+// router.post("/api/test", checkSchema(userValidationSchema), (req, res) => {
+//   const result = validationResult(req);
+//   console.log(result);
+//   if (!result.isEmpty()) {
+//     return res.status(400).send({ errors: result.array() });
+//   }
+//   const data = matchedData(req);
+
+//   const newData = { id: testing.length + 1, ...data };
+
+//   testing.push(newData);
+//   return res.send(newData);
+// });
 router.patch("/api/test/:id", resolveIndexByUserId, (req, res) => {
   const { body, findUserIndex } = req;
   testing[findUserIndex] = { ...testing[findUserIndex], ...body };

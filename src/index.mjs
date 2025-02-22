@@ -3,12 +3,17 @@ import indexRouter from "./routes/index.mjs";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import passport from "passport";
+import mongoose, { mongo } from "mongoose";
 import {testing} from "./utils/constants.mjs";
 import "./strategies/local-strategy.mjs";
 // import usersRouter from "./routes/users.mjs";
-// import productsRouter from "./routes/products.mjs";
+// import productsRouter from "./routes/products.mjs"; 
 
 const app = express();
+
+mongoose.connect("mongodb://localhost:27017/expressNew")
+.then(()=>console.log("database connected"))
+.catch((err)=>console.log(err));
 
 app.use(express.json());
 app.use(session({
